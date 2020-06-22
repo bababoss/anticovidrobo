@@ -1,0 +1,7 @@
+numpy
+#librosa
+#matplotlib
+python_speech_features
+#nimba==0.48
+#pyobjc
+#AppKit
