@@ -29,7 +29,7 @@ def temperature():
         print("Ambent Temp:  ", AmbentTemp)
         print("Object Temp:  ", ObjectTemp)
         print("------------")
-        if ObjectTemp-AmbentTemp >.8:
+        if ObjectTemp-AmbentTemp >0.5:
             return {'PersionTemp':ObjectTemp,"AmbentTemp":AmbentTemp}
         
 

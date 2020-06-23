@@ -160,6 +160,8 @@ def init_video_streaming(faceNet, maskNet):
 
     mask_count=0
     state_count=0
+    screening_status=False
+    wait=False
     robotic_states=robotic_states_machine()
 
     # initialize the video stream and allow the camera sensor to warm up
@@ -171,7 +173,7 @@ def init_video_streaming(faceNet, maskNet):
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
         frame = vs.read()
-        frame = imutils.resize(frame, width=1000)
+        frame = imutils.resize(frame, width=720,height=480)
 
         # detect faces in the frame and determine if they are wearing a
         # face mask or not
@@ -214,16 +216,21 @@ def init_video_streaming(faceNet, maskNet):
                     print("[INFO ]: robotic_states ",robotic_states)
                     robotic_states=robotic_states_machine()
                     mask_count=0
+                    wait=True
                 else:
                     mask_detection(False)
                 state_count=0
+            
 
 
 
             color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
 
             # include the probability in the label
-            label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
+            if screening_status:
+                label = "{}: {:.2f}% TEMP: {:.2f} COVID: {}".format(label, max(mask, withoutMask) * 100,temp_detected['PersionTemp'],speech_command)
+            else:
+                label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
 
             # display the label and bounding box rectangle on the output
             # frame
@@ -236,7 +243,8 @@ def init_video_streaming(faceNet, maskNet):
         # show the output frame
         cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF
-
+        if wait:
+            time.sleep(10)
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
