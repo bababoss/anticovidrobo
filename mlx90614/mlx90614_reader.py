@@ -20,9 +20,16 @@ i2c = io.I2C(board.SCL, board.SDA, frequency=100000)
 mlx = adafruit_mlx90614.MLX90614(i2c)
 
 # temperature results in celsius
-while(True):
-    time.sleep(1)
-    print("Ambent Temp:  ", mlx.ambient_temperature)
-    print("Object Temp:  ", mlx.object_temperature)
-    print("------------")
+def temperature():
+    while(True):
+        time.sleep(1)
+        AmbentTemp=mlx.ambient_temperature
+        ObjectTemp=mlx.object_temperature
+        
+        print("Ambent Temp:  ", AmbentTemp)
+        print("Object Temp:  ", ObjectTemp)
+        print("------------")
+        if ObjectTemp-AmbentTemp >.8:
+            return {'PersionTemp':ObjectTemp,"AmbentTemp":AmbentTemp}
+        
 
