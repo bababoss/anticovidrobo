@@ -29,6 +29,8 @@ from flask_cors import CORS
 
 
 from face_mask_detector import detect_mask_video
+# from tflite_speech_recognition import speech_command_recognizer
+
 
 application = Flask(__name__)
 CORS(application)
@@ -36,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 # construct the argument parser and parse the arguments
+
 ap = argparse.ArgumentParser()
 ap.add_argument("-f", "--face", type=str,
 	default="face_mask_detector/face_detector",
@@ -63,7 +66,14 @@ maskNet = load_model(args["model"])
 
 detect_mask_video.init_video_streaming(faceNet, maskNet)
 
-
+# def speech_recognizer():
+#     print("Start voice processing")
+#     speech_command=speech_command_recognizer.voice_inference()
+#     print("[PERSON SPEECH_COMMAND] ",speech_command)
+#     return speech_command
+# while True:
+#     speech_recognizer()
+    
 
 # HTTP Errors handlers
 @application.errorhandler(404)

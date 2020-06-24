@@ -11,7 +11,7 @@ import scipy.signal
 import timeit
 import time
 import python_speech_features
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 from tflite_runtime.interpreter import Interpreter
 
@@ -19,7 +19,7 @@ from tflite_runtime.interpreter import Interpreter
 debug_time = 0
 debug_acc = 0
 led_pin = 8
-word_threshold = 1.0
+word_threshold = .99
 rec_duration = 0.5
 window_stride = 0.5
 sample_rate = 48000
@@ -69,7 +69,8 @@ def sd_callback(rec, frames, time, status):
 
     global word_flag
     global speech_command
-    
+    speech_command='no'
+    word_flag=0
 
     # Start timing for testing
     start = timeit.default_timer()
