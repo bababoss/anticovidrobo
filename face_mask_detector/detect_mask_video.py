@@ -150,9 +150,9 @@ def screening(mask_res,temperature,speech_command):
 
 def robotic_states_machine():
     robotic_state={
-        "state_1":{"status":False,"result":''},
-        "state_2":{"status":False,"result":''},
-        "state_3":{"status":False,"result":''},
+        "state_1":{"status":False,"result":'',"name":"mask_detection"},
+        "state_2":{"status":False,"result":'','name':"persion_temperature"},
+        "state_3":{"status":False,"result":'','name':"speech_command"},
         }
     return robotic_state
 
@@ -229,6 +229,7 @@ def init_video_streaming(faceNet, maskNet):
                     robotic_states["state_3"]['result']=speech_command
                     print("[INFO ]: robotic_states ",robotic_states)
                     robotic_states=robotic_states_machine()
+#                     data_insert(robotic_states)
                     mask_count=0
                     wait=True
                 else:

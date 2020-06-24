@@ -83,7 +83,17 @@ def screening_response():
     else:
         print ('sorry you cannot enter')
 
-
+def data_insert(data_dict):
+    """
+    @params:
+        data_dict={
+        "state_1":{"status":False,"result":'',"name":"mask_detection"},
+        "state_2":{"status":False,"result":'','name':"persion_temperature"},
+        "state_3":{"status":False,"result":'','name':"speech_command"},
+        }
+    """
+    pass
+        
 def main_loop():
 	count = 0
 	while True:
