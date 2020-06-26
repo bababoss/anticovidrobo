@@ -26,7 +26,7 @@ sample_rate = 48000
 resample_rate = 8000
 num_channels = 1
 num_mfcc = 16
-model_path = 'wake_word_yes_lite.tflite'
+model_path = 'wake_word_stop_lite.tflite'
 word_flag = 0
 speech_command='no'
 
@@ -113,7 +113,7 @@ def sd_callback(rec, frames, time, status):
         print("Emergency shut down detected!",val,output_data,speech_command)
         #GPIO.output(led_pin, GPIO.LOW)
         
-        word_flag = 1
+        #word_flag = 1
 
     if debug_acc:
         print(val)
@@ -131,8 +131,8 @@ def voice_inference():
                         callback=sd_callback):
         while word_flag==0:
             end_time=time.time()
-            if end_time-start_time >=5:
-                break
+#             if end_time-start_time >=5:
+#                 break
         return speech_command
         
         

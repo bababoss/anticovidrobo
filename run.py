@@ -6,7 +6,8 @@ from face_mask_detector import detect_mask_video
 
 
 faceNet, maskNet=load_models.load()
-detect_mask_video.init_video_streaming(faceNet, maskNet)
+interpreter,input_details,output_details=load_models.load_speech_model()
+detect_mask_video.init_video_streaming(faceNet, maskNet,interpreter,input_details,output_details)
 
 
 
@@ -14,4 +15,4 @@ detect_mask_video.init_video_streaming(faceNet, maskNet)
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

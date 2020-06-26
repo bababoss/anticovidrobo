@@ -1,122 +1,90 @@
 from flask import request, render_template, flash, g, session, redirect, url_for, jsonify
-import sys
+import sqlite3
 # Import the database object from the main app module
 from app import app, db
 # Import module models (i.e. Covidinfo), if need be this object can be used to validate or modify info
 from app.model.models import Covidinfo
+#from face_mask_detector import detect_mask_video
 
-human_info = {'is_human': True}
-mask_info = {'mask_status': True}
-temp_info = {'value': 100}
-voice_info = {'value': 'ans'}  #test this with False as well and it can have False value as well
-audio2_q1= {"value":1}
-audio2_q2= {"value":1}
-audio2_q3= {"value": 1}
+temp_threshold = 37.6 # Temperature threshold in Celsius to decide if person is sick
+#data_dict = detect_mask_video.robotic_states_machine()
 
+# data_dict={
+# 	     "state_1":{"status":False,"result":True,"name":"mask_detection"},
+# 	     "state_2":{"status":False,"result":36.6,'name':"persion_temperature"},
+# 	     "state_3":{"status":False,"result":'yes','name':"speech_command"},
+# 	     }
 
-#just for playing around and testing
-@app.route('/')
-def hello():
-	list = [
-            {'a': 1, 'b': 2},
-            {'a': 5, 'b': 10}
-           ]
-	return jsonify({'name': list})
+# result_dict = {key: value['result'] for key, value in data_dict.items()}
 
-
-#health check in case this needs to be on TAP
+# health check in case this needs to be on TAP
 @app.route('/health')
 def health():
-	return jsonify({'Health':"Health is all GOOD"})
+    return jsonify({'Health': "Health is all GOOD"})
 
 
-def is_human():
-	if human_info == 'True':
-		print('You are good to go')
-	else:
-		sys.exit("Error message, non human responce.")
+# /selectdata endpoint can be used to present data in UI
+@app.route('/selectdata')
+def selectdata():
+	conn = sqlite3.connect('covidinfo.db')
+	cur = conn.cursor()
+	cur.execute('select * from covidinfo_table;')
+	colnames = [desc[0] for desc in cur.description]
+	collength = len(colnames)
+	result_list=cur.fetchall()
+	cur.execute('''select count(*) as Total, (select count(*) from covidinfo_table where screening_result='Pass') as Safe,
+				(select count(*) from covidinfo_table where screening_result='Failed') as notSafe from covidinfo_table;''')
+	colnames1 = [desc[0] for desc in cur.description]
+	result_list1=cur.fetchall()
 
-def mask_check():
-	if mask_info['mask_status'] == 'True':
-		print ('You are good to go')
-	else:
-		sys.exit("Error message: No mask found, please make sure you are wearing a mask")
+	cur.execute('Select  date_created, count(*), screening_result  from covidinfo_table GROUP BY screening_result, date_created ORDER BY date_created ;')
+	colnames2 = [desc[0] for desc in cur.description]
+	result_list2=cur.fetchall()
+	return render_template('index.html', colnames=colnames, tableout=result_list, collength=collength,
+		colnames1=colnames1, tableout1=result_list1, colnames2=colnames2, tableout2=result_list2, topic= 'Covid Screening info')
 
-def temp_check():
-    threshold = 100
-    if temp_info['value'] >= threshold:
-        sys.exit("Error message, seems like you have fever")
+
+
+def temp_decision(data_dict):
+    result_dict = {key: value['result'] for key, value in data_dict.items()}
+    temp_low = True
+    if result_dict['state_2'] > temp_threshold:
+        temp_low = False
+    return temp_low
+
+# endpoint to check
+
+def screening_decision(data_dict):
+    result_dict = {key: value['result'] for key, value in data_dict.items()}
+    is_temp_low=temp_decision(data_dict)
+    is_mask_on = result_dict['state_1']
+    if result_dict['state_3'] == 'no':
+        no_symptoms = True
     else:
-        print ('you can move ahead')
-
-
-def trigger_voice(audio_input):
-    #play command 1
-    play_audio_1()
-
-def voice_get_info(audio_file):
-    attempt = 0
-    while voice_info['value'] == False:
-        attempt += 1
-        trigger_voice(audio_file)   #call raspi funcition for playing the audio
-        if attempt == 3:
-            sys.exit("Error message, you have reached max attempts for screening")
-    if voice_info['value'] == 'yes':
-        return voice_info['value']
+        no_symptoms = False
+    decision_list = [is_mask_on, is_temp_low, no_symptoms]
+    if all(decision_list):
+        return ("Pass")
     else:
-        return voice_info['value']
+        return ("Failed")
 
-def screening():
-	answer1 = voice_get_info(audio2_q1)
-	answer2 = voice_get_info(audio2_q2)
-	answer3 = voice_get_info(audio2_q3)
-	list = [ answer1, answer2, answer3 ]
-	return list
+# For inserting inputs from robotic_state_machine() into the database
 
 
-#fix this, error with boolean and string
 
-def screening_response():
-    answers = screening()
-    if any(False in i for i in answers):
-        print ('You can enter')
-    else:
-        print ('sorry you cannot enter')
+def db_insert(data_dict):
+    result_dict = {key: value['result'] for key, value in data_dict.items()}
+    screening_result=screening_decision(data_dict)
+    try:
+        covidinfo_now = Covidinfo(result_dict['state_1'], result_dict['state_2'], {"Voice Input" :result_dict['state_3']}, screening_result)
+        db.session.add(covidinfo_now)
+        db.session.commit()
+        db.session.close()
+        return jsonify({'message': 'One record has been inserted into the database'})
+    except Exception as e:
+        return e
 
-def data_insert(data_dict):
-    """
-    @params:
-        data_dict={
-        "state_1":{"status":False,"result":'',"name":"mask_detection"},
-        "state_2":{"status":False,"result":'','name':"persion_temperature"},
-        "state_3":{"status":False,"result":'','name':"speech_command"},
-        }
-    """
-    pass
-        
-def main_loop():
-	count = 0
-	while True:
-		count+=1
-		try:
-			print('stage1')
-			is_human()
-			print('Stage2')
-			mask_check()
-			print('Stage3')
-			temp_check()
-			print('Stage4')
-			screening()
-			print('Stage5')
-			screening_response()
-		except Exception as e:
-			count=0
 
-@app.route('/test')
-def test():
-	is_human()
-	return response
-
-#markup stage and execute only when called.
-#jsonify all the responces
-#CHANGE USING LIST comprehension. line 77 to 82
+# db_insert(data_dict)
+	
+# Voice team to call db_insert() function at the end of while loop

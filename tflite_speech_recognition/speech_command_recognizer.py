@@ -39,11 +39,11 @@ window = np.zeros(int(rec_duration * resample_rate) * 2)
 # GPIO.setup(8, GPIO.OUT, initial=GPIO.HIGH)
 
 # Load model (interpreter)
-interpreter = Interpreter(model_path)
-interpreter.allocate_tensors()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-print(input_details)
+# interpreter = Interpreter(model_path)
+# interpreter.allocate_tensors()
+# input_details = interpreter.get_input_details()
+# output_details = interpreter.get_output_details()
+# print(input_details)
 
 # Decimate (filter and downsample)
 def decimate(signal, old_fs, new_fs):
@@ -63,68 +63,68 @@ def decimate(signal, old_fs, new_fs):
     resampled_signal = scipy.signal.decimate(signal, int(dec_factor))
 
     return resampled_signal, new_fs
-
-# This gets called every 0.5 seconds
-def sd_callback(rec, frames, time, status):
-
+def voice_inference(interpreter,input_details,output_details):
+    # This gets called every 0.5 seconds
     global word_flag
     global speech_command
-    speech_command='no'
-    word_flag=0
+    def sd_callback(rec, frames, time, status):
 
-    # Start timing for testing
-    start = timeit.default_timer()
-    
-    # Notify if errors
-    if status:
-        print('Error:', status)
-    
-    # Remove 2nd dimension from recording sample
-    rec = np.squeeze(rec)
-    
-    # Resample
-    rec, new_fs = decimate(rec, sample_rate, resample_rate)
-    
-    # Save recording onto sliding window
-    window[:len(window)//2] = window[len(window)//2:]
-    window[len(window)//2:] = rec
+        word_flag=0
 
-    # Compute features
-    mfccs = python_speech_features.base.mfcc(window, 
-                                        samplerate=new_fs,
-                                        winlen=0.256,
-                                        winstep=0.050,
-                                        numcep=num_mfcc,
-                                        nfilt=26,
-                                        nfft=2048,
-                                        preemph=0.0,
-                                        ceplifter=0,
-                                        appendEnergy=False,
-                                        winfunc=np.hanning)
-    mfccs = mfccs.transpose()
+        # Start timing for testing
+        start = timeit.default_timer()
 
-    # Make prediction from model
-    in_tensor = np.float32(mfccs.reshape(1, mfccs.shape[0], mfccs.shape[1], 1))
-    interpreter.set_tensor(input_details[0]['index'], in_tensor)
-    interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-    val = output_data[0][0]
-    if val > word_threshold:
-        speech_command='yes'
-        print("Emergency shut down detected!",val,output_data,speech_command)
-        #GPIO.output(led_pin, GPIO.LOW)
-        
-        word_flag = 1
+        # Notify if errors
+        if status:
+            print('Error:', status)
 
-    if debug_acc:
-        print(val)
-    
-    if debug_time:
-        print(timeit.default_timer() - start)
+        # Remove 2nd dimension from recording sample
+        rec = np.squeeze(rec)
 
-# Start streaming from microphone
-# word_flag=0
-def voice_inference():
+        # Resample
+        rec, new_fs = decimate(rec, sample_rate, resample_rate)
+
+        # Save recording onto sliding window
+        window[:len(window)//2] = window[len(window)//2:]
+        window[len(window)//2:] = rec
+
+        # Compute features
+        mfccs = python_speech_features.base.mfcc(window, 
+                                            samplerate=new_fs,
+                                            winlen=0.256,
+                                            winstep=0.050,
+                                            numcep=num_mfcc,
+                                            nfilt=26,
+                                            nfft=2048,
+                                            preemph=0.0,
+                                            ceplifter=0,
+                                            appendEnergy=False,
+                                            winfunc=np.hanning)
+        mfccs = mfccs.transpose()
+
+        # Make prediction from model
+        in_tensor = np.float32(mfccs.reshape(1, mfccs.shape[0], mfccs.shape[1], 1))
+        interpreter.set_tensor(input_details[0]['index'], in_tensor)
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        val = output_data[0][0]
+        if val > word_threshold:
+            speech_command='no'
+            print("INFO DETCTECTED SPEECH COMMAND! ",speech_command)
+            return speech_command
+            #GPIO.output(led_pin, GPIO.LOW)
+
+            word_flag = 1
+
+        if debug_acc:
+            print(val)
+
+        if debug_time:
+            print(timeit.default_timer() - start)
+
+    # Start streaming from microphone
+    # word_flag=0
+
     start_time=time.time()
     with sd.InputStream(channels=num_channels,
                         samplerate=sample_rate,
@@ -134,9 +134,16 @@ def voice_inference():
             end_time=time.time()
             if end_time-start_time >=5:
                 break
-        return speech_command
+            
+    return speech_command
         
         
 if __name__=="__main__":
-    res=voice_inference()
+    # Load model (interpreter)
+    interpreter = Interpreter(model_path)
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    print(input_details)
+    res=voice_inference(interpreter,input_details,output_details)
     print("result ",res)

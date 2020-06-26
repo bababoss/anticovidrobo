@@ -1,0 +1,170 @@
+<head>
+        <title>Anticovid Data</title>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <!-- Custom styles for this template -->
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" />
+    </head>
+
+<!--canvas here -->
+    <div class="d-flex">
+        <div class="chart_container">
+        <canvas  id="polarChart" width="400px" height="400px"></canvas>
+        <h6>Total Case Status</h6>
+        </div>
+        <div class="chart_container">
+            <canvas  id="lineChart" width="1000px" height="400px"></canvas>
+            <h6>Screening Reports</h6>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <h4></h4>
+        <h5>{{topic}}</h5>
+        <table id="table" class="table display table-striped table-bordered" style="width:100%">
+        <thead>
+            <tr>
+         {%- for column in colnames %}
+            <th>{{ column.upper() }}</th>
+         {%- endfor %}
+           </tr>
+       </thead>
+        <tbody>
+        {%- for row in tableout %}
+           <tr>
+               {%- for i in range(0,collength) %}
+              <td>{{ row[i] }}</td>
+              {%- endfor %}
+          </tr>
+        {%- endfor %}
+        </tbody>
+        </table>
+
+
+
+        <!-- Bootstrap core JavaScript
+                       ================================================== -->
+                       <!-- Placed at the end of the document so the pages load faster -->
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+                       <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>-->
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+                       <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+                       <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+                       <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.js"></script>
+                       <!-- export buttons-->
+                       <script src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+                       <script src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+                       <!-- Icons -->
+                       <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+                       <script> feather.replace() </script>
+                       <!-- for exporting to excel and copying a datatable-->
+                       <script>
+                           $(document).ready(function()
+                               {
+                                   $('table.display').DataTable
+                                   ( {
+                                       dom: 'Bfl<"top"i>rt<"bottom"p><"clear">',
+                                       buttons: [
+                                                   {
+                                                       extend: 'copyHtml5',
+                                                       text: 'Copy'
+                                                   },
+                                                   {
+                                                       extend: 'excelHtml5',
+                                                       text: 'Export to Excel'
+                                                   }
+                                               ]
+                                       }
+                                   );
+                               }
+                           );
+                           function search_event() {
+                               var txt_val = document.getElementById('search_pg').value;
+                               if (txt_val == "") {
+                                 alert("Enter few chars of Database Name or Hostname to Proceed");
+                                 return false;
+                               } else {
+                                 window.location.href='/pgsearch?srch='+txt_val;
+                               }
+                           }
+                       </script>
+                       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+
+<!-- pie chart Db sizes-->
+<script>
+    //polar
+    var ctxPA = document.getElementById("polarChart").getContext('2d');
+    var myPolarChart = new Chart(ctxPA, {
+    type: 'polarArea',
+    data: {
+    labels: ["Total", "Postive Cases", "Negative Cases"],
+    datasets: [{
+    data: [{% for item in tableout1[0] %}
+            "{{ item }}",
+            {% endfor %}],
+    backgroundColor: ["rgba(219, 0, 0, 0.1)", "rgba(0, 165, 2, 0.1)", "rgba(255, 195, 15, 0.2)"
+    ],
+    hoverBackgroundColor: ["rgba(219, 0, 0, 0.2)", "rgba(0, 165, 2, 0.2)",
+    "rgba(255, 195, 15, 0.3)"
+    ]
+    }]
+    },
+    options: {
+    responsive: true
+    }
+    });
+</script>
+<!-- bar chart connection info-->
+<script>
+        //line
+        var ctxL = document.getElementById("lineChart").getContext('2d');
+        var myLineChart = new Chart(ctxL, {
+        type: 'line',
+        data: {
+        labels: [{% for item in tableout2 %}
+                "{{ item[0] }}",
+                {% endfor %}],
+        datasets: [{
+        label: "Symptomatic",
+        data: [{% for item in tableout2 %}
+                {%if item[2]=="Failed"%}
+                "{{ item[1] }}",
+                {% endif %}
+                {% endfor %}],
+        backgroundColor: [
+        'rgba(105, 0, 132, .2)',
+        ],
+        borderColor: [
+        'rgba(200, 99, 132, .7)',
+        ],
+        borderWidth: 2
+        },
+        {
+        label: "Asymptomatic",
+        data: [{% for item in tableout2 %}
+                {%if item[2]=="Pass"%}
+                "{{ item[1] }}",
+                {% endif %}
+                {% endfor %}],
+        backgroundColor: [
+        'rgba(0, 137, 132, .2)',
+        ],
+        borderColor: [
+        'rgba(0, 10, 130, .7)',
+        ],
+        borderWidth: 2
+        }
+        ]
+        },
+        options: {
+        responsive: true
+        }
+        });
+</script>
+<!-- polar chat -->

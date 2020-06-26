@@ -8,7 +8,7 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'change-this-when-you-are-ready'
     #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']  > use this in case env is set for URI
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/test.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + basedir + '/covidinfo.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     if not database_exists(SQLALCHEMY_DATABASE_URI):
         create_database(SQLALCHEMY_DATABASE_URI)

@@ -13,14 +13,21 @@ import time
 import cv2
 import os
 import pygame
-
+import pprint
 
 from mlx90614 import mlx90614_reader
 from tflite_speech_recognition import speech_command_recognizer
+from app.model import controllers
 
-COVID_QUERY="/home/pi/have-you-had-cold-and-fever-in1592969281.mp3"
-WELCOME="/home/pi/Hello-Welcome-to-target--Tha1592969510.mp3"
-TEMP_QUERY="/home/pi/please-stand-in-front-of-camer1592969386.mp3"
+COVID_QUERY="/home/pi/Downloads/Please-answer-following-questi1592997390.mp3"
+WELCOME="/home/pi/Downloads/Hello-Welcome-to-target--Tha1592969510.mp3"
+TEMP_QUERY="/home/pi/Downloads/Please-bring-your-forehead-in1593020270.mp3"
+TEMP_MSG="/home/pi/Downloads/Temperature-measured-successfu1593020307.mp3"
+THANKS_MSG="/home/pi/Downloads/Thanks-you-for-the-screening-1592997554.mp3"
+FAILED_MSG="/home/pi/Downloads/You-have-failed--the-screening1592997835.mp3"
+PASS_MSG="/home/pi/Downloads/You-have-pass--the-screening-p1592997882.mp3"
+MASK_MSG="/home/pi/Downloads/You-have-not-wearing-the-mask1592996442.mp3"
+
 
 
 
@@ -120,16 +127,16 @@ def mask_detection(res):
     print("Result of mask:   ",res)
     return res
 
-def speech_recognizer():
-    print("Start voice processing")
-    speech_commands=speech_command_recognizer.voice_inference()
-    print("[PERSON SPEECH_COMMAND] ",speech_commands)
+def speech_recognizer(interpreter,input_details,output_details):
+    print("[INFO]:! Start Voice Processing")
+    speech_commands=speech_command_recognizer.voice_inference(interpreter,input_details,output_details)
+#     print("[PERSON SPEECH_COMMAND] ",speech_commands)
     return speech_commands
     
     
     
 def temperature():
-    print("Start temperature processing")
+    print("[INFO]: Start Temperature Processing")
     temp=mlx90614_reader.temperature()
     print("[PERSON TEMP] ",temp)
     return temp
@@ -143,7 +150,7 @@ def play_audio(audio_path):
 
 
 def screening(mask_res,temperature,speech_command):
-    print("Start screening processing")
+    print("[INFO]:! Start Screening Processing")
     # DO some processing 
 
 
@@ -151,7 +158,7 @@ def screening(mask_res,temperature,speech_command):
 def robotic_states_machine():
     robotic_state={
         "state_1":{"status":False,"result":'',"name":"mask_detection"},
-        "state_2":{"status":False,"result":'','name':"persion_temperature"},
+        "state_2":{"status":False,"result":0.0,'name':"persion_temperature"},
         "state_3":{"status":False,"result":'','name':"speech_command"},
         }
     return robotic_state
@@ -164,7 +171,7 @@ def robotic_states_machine():
 #     }
 
 
-def init_video_streaming(faceNet, maskNet):
+def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_details):
 
     mask_count=0
     state_count=0
@@ -219,21 +226,37 @@ def init_video_streaming(faceNet, maskNet):
                     mask_res=mask_detection(True)
                     robotic_states["state_1"]['result']=mask_res
                     play_audio(TEMP_QUERY)
-                    time.sleep(3)
+                    time.sleep(10)
                     temp_detected=temperature()
-                    robotic_states["state_2"]['result']=temp_detected
+                    play_audio(TEMP_MSG)
+                    time.sleep(5)
+                    robotic_states["state_2"]['result']=float(temp_detected['PersionTemp'])
                     play_audio(COVID_QUERY)
-                    time.sleep(8)
-                    speech_command=speech_recognizer()
+                    time.sleep(15)
+                    speech_command=speech_recognizer(interpreter,input_details,output_details)
                     screening(mask_res,temp_detected,speech_command)
                     robotic_states["state_3"]['result']=speech_command
-                    print("[INFO ]: robotic_states ",robotic_states)
+                    print("[INFO ]: robotic_states -----",)
+                    pprint.pprint(robotic_states)
+                    play_audio(THANKS_MSG)
+                    time.sleep(5)
+                    
+                    if speech_command == 'no':
+                        play_audio(PASS_MSG)
+                        time.sleep(5)
+                    else:
+                        play_audio(FAILED_MSG)
+                        time.sleep(5)
+                    controllers.db_insert(robotic_states)
+                    
                     robotic_states=robotic_states_machine()
 #                     data_insert(robotic_states)
                     mask_count=0
                     wait=True
                 else:
-                    mask_detection(False)
+                    play_audio(MASK_MSG)
+                    time.sleep(5)
+                    controllers.db_insert(robotic_states)
                 state_count=0
             
 
