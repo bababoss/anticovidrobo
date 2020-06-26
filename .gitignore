@@ -5,3 +5,4 @@ face_mask_detector/dataset/*
 /__pycache__/*
 **/__pycache__/**
 *.pyc
+*/__pycache__/*
