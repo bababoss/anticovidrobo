@@ -130,7 +130,8 @@ def mask_detection(res):
 def speech_recognizer(interpreter,input_details,output_details):
     print("[INFO]:! Start Voice Processing")
     speech_commands=speech_command_recognizer.voice_inference(interpreter,input_details,output_details)
-#     print("[PERSON SPEECH_COMMAND] ",speech_commands)
+#     print("[PERSON SPEECH_COMMAND] ",speech_commands)   
+
     return speech_commands
     
     
@@ -157,7 +158,7 @@ def screening(mask_res,temperature,speech_command):
 
 def robotic_states_machine():
     robotic_state={
-        "state_1":{"status":False,"result":'',"name":"mask_detection"},
+        "state_1":{"status":False,"result":False,"name":"mask_detection"},
         "state_2":{"status":False,"result":0.0,'name':"persion_temperature"},
         "state_3":{"status":False,"result":'','name':"speech_command"},
         }
@@ -199,7 +200,7 @@ def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_detai
 
         if preds.shape[0]:
             robotic_states["state_1"]["status"]=True
-            print("[STATE-1----STATE-1]")
+            print("[STATE-MACHINE----Stage-1]")
             state_count+=1
         else:
             mask_count=0
@@ -218,8 +219,8 @@ def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_detai
             if robotic_states["state_1"]["status"]:
                 if label == "Mask":
                     mask_count+=1
-            if state_count>=6:
-                if mask_count>3:
+            if state_count>=4:
+                if mask_count>2:
                     print("--------Mask---",pred)
                     play_audio(WELCOME)
                     time.sleep(5)
@@ -236,7 +237,7 @@ def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_detai
                     speech_command=speech_recognizer(interpreter,input_details,output_details)
                     screening(mask_res,temp_detected,speech_command)
                     robotic_states["state_3"]['result']=speech_command
-                    print("[INFO ]: robotic_states -----",)
+                    #print("[INFO ]: robotic_states -----",)
                     pprint.pprint(robotic_states)
                     play_audio(THANKS_MSG)
                     time.sleep(5)
@@ -247,6 +248,7 @@ def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_detai
                     else:
                         play_audio(FAILED_MSG)
                         time.sleep(5)
+                    #print("[INFO] Inserting in DB--",robotic_states)
                     controllers.db_insert(robotic_states)
                     
                     robotic_states=robotic_states_machine()
@@ -256,6 +258,7 @@ def init_video_streaming(faceNet, maskNet,interpreter,input_details,output_detai
                 else:
                     play_audio(MASK_MSG)
                     time.sleep(5)
+                    print("[INFO] Inserting in DB--",robotic_states)
                     controllers.db_insert(robotic_states)
                 state_count=0
             

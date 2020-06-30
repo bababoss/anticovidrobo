@@ -19,7 +19,7 @@ from tflite_runtime.interpreter import Interpreter
 debug_time = 0
 debug_acc = 0
 led_pin = 8
-word_threshold = .99
+word_threshold = 1.0
 rec_duration = 0.5
 window_stride = 0.5
 sample_rate = 48000
@@ -28,7 +28,6 @@ num_channels = 1
 num_mfcc = 16
 model_path = '/home/pi/anticovidrobo/tflite_speech_recognition/wake_word_yes_lite.tflite'
 word_flag = 0
-speech_command='no'
 
 # Sliding window
 window = np.zeros(int(rec_duration * resample_rate) * 2)
@@ -108,10 +107,10 @@ def voice_inference(interpreter,input_details,output_details):
         interpreter.invoke()
         output_data = interpreter.get_tensor(output_details[0]['index'])
         val = output_data[0][0]
-        if val > word_threshold:
-            speech_command='no'
+        if val >= word_threshold:
+            speech_command='yes'
             print("INFO DETCTECTED SPEECH COMMAND! ",speech_command)
-            return speech_command
+            
             #GPIO.output(led_pin, GPIO.LOW)
 
             word_flag = 1
@@ -130,12 +129,19 @@ def voice_inference(interpreter,input_details,output_details):
                         samplerate=sample_rate,
                         blocksize=int(sample_rate * rec_duration),
                         callback=sd_callback):
+        speech_command='no'
         while word_flag==0:
             end_time=time.time()
             if end_time-start_time >=5:
                 break
+        if word_flag:
+            print("yyyyyyyyy")
+            speech_command='yes'
+        else:
+            print("nnnnnnnnnn")
+            speech_command='no'
             
-    return speech_command
+        return speech_command
         
         
 if __name__=="__main__":

@@ -65,6 +65,8 @@ def screening_decision(data_dict):
     decision_list = [is_mask_on, is_temp_low, no_symptoms]
     if all(decision_list):
         return ("Pass")
+    elif is_mask_on == False:
+        return "NO Mask"
     else:
         return ("Failed")
 
@@ -80,7 +82,7 @@ def db_insert(data_dict):
         db.session.add(covidinfo_now)
         db.session.commit()
         db.session.close()
-        return jsonify({'message': 'One record has been inserted into the database'})
+        return 'One record has been inserted into the database'
     except Exception as e:
         return e
 

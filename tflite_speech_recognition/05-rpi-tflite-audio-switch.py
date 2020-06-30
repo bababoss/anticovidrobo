@@ -19,14 +19,14 @@ from tflite_runtime.interpreter import Interpreter
 debug_time = 0
 debug_acc = 0
 led_pin = 8
-word_threshold = .9
+word_threshold = .8
 rec_duration = 0.5
 window_stride = 0.5
 sample_rate = 48000
 resample_rate = 8000
 num_channels = 1
 num_mfcc = 16
-model_path = 'wake_word_stop_lite.tflite'
+model_path = 'wake_word_yes_lite.tflite'
 word_flag = 0
 speech_command='no'
 
@@ -108,6 +108,7 @@ def sd_callback(rec, frames, time, status):
     interpreter.invoke()
     output_data = interpreter.get_tensor(output_details[0]['index'])
     val = output_data[0][0]
+    print("[INFO] output_data ",output_data)
     if val > word_threshold:
         speech_command='yes'
         print("Emergency shut down detected!",val,output_data,speech_command)

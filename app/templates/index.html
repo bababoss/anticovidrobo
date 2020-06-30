@@ -1,3 +1,4 @@
+
 <head>
         <title>Anticovid Data</title>
         <!-- Required meta tags -->
@@ -103,7 +104,7 @@
     var myPolarChart = new Chart(ctxPA, {
     type: 'polarArea',
     data: {
-    labels: ["Total", "Postive Cases", "Negative Cases"],
+    labels: ["Total","Symptomatic","Asymptomatic"],
     datasets: [{
     data: [{% for item in tableout1[0] %}
             "{{ item }}",
@@ -135,6 +136,8 @@
         data: [{% for item in tableout2 %}
                 {%if item[2]=="Failed"%}
                 "{{ item[1] }}",
+                {% else %}
+                   "0",
                 {% endif %}
                 {% endfor %}],
         backgroundColor: [
@@ -150,6 +153,8 @@
         data: [{% for item in tableout2 %}
                 {%if item[2]=="Pass"%}
                 "{{ item[1] }}",
+                  {% else %}
+                   "0",
                 {% endif %}
                 {% endfor %}],
         backgroundColor: [
