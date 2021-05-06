@@ -18,7 +18,7 @@ decorator==4.4.2
 defusedxml==0.6.0
 entrypoints==0.3
 Flask==1.1.2
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-SQLAlchemy==2.4.3
 gast==0.2.2
 google-auth==1.18.0
